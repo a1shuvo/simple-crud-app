@@ -1,9 +1,11 @@
-import { use } from "react";
+import { use, useState } from "react";
 
 const Users = ({ usersPromise }) => {
   const initialUsers = use(usersPromise);
-  console.log(initialUsers);
+  const [users, setUsers] = useState(initialUsers);
+  console.log(users);
 
+  // Add User
   const handleAddUser = (e) => {
     e.preventDefault();
     const name = e.target.name.value;
@@ -23,13 +25,33 @@ const Users = ({ usersPromise }) => {
       .then((data) => {
         console.log("Data after creating user in the DB", data);
         if (data.insertedId) {
+          newUser._id = data.insertedId;
+          const newUsers = [...users, newUser];
+          setUsers(newUsers);
           alert("User added successfully!");
           e.target.reset();
         }
       });
   };
+
+  // Delete User
+  const handleDeleteUser = (id) => {
+    console.log(id);
+    fetch(`http://localhost:3000/users/${id}`, {
+      method: "DELETE",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("After delete", data);
+        if (data.deletedCount) {
+          const remainingUser = users.filter((user) => user._id !== id);
+          setUsers(remainingUser);
+        }
+      });
+  };
   return (
     <div>
+      <h3>Users: {users.length}</h3>
       {/* Add User */}
       <div>
         <form onSubmit={handleAddUser}>
@@ -39,6 +61,16 @@ const Users = ({ usersPromise }) => {
           <br />
           <input type="submit" value="Add User" />
         </form>
+
+        {/* View Users */}
+        <div>
+          {users.map((user) => (
+            <p key={user._id}>
+              {user.name} : {user.email}
+              <button onClick={() => handleDeleteUser(user._id)}>x</button>
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );
